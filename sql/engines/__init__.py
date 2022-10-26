@@ -1,10 +1,12 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
-from sql.engines.models import ResultSet
+from sql.engines.models import ResultSet, ReviewSet
 from sql.utils.ssh_tunnel import SSHConnection
 
 
 class EngineBase:
     """enginebase 只定义了init函数和若干方法的名字, 具体实现用mysql.py pg.py等实现"""
+
+    test_query = None
 
     def __init__(self, instance=None):
         self.conn = None
@@ -31,17 +33,17 @@ class EngineBase:
                     instance.tunnel.pkey,
                     instance.tunnel.pkey_password,
                 )
-                self.host,self.port = self.ssh.get_ssh()
+                self.host, self.port = self.ssh.get_ssh()
 
     def __del__(self):
-        if hasattr(self, 'ssh'):
+        if hasattr(self, "ssh"):
             del self.ssh
-        if hasattr(self, 'remotessh'):
+        if hasattr(self, "remotessh"):
             del self.remotessh
 
     def remote_instance_conn(self, instance=None):
         # 判断如果配置了隧道则连接隧道
-        if not hasattr(self, 'remotessh') and instance.tunnel:
+        if not hasattr(self, "remotessh") and instance.tunnel:
             self.remotessh = SSHConnection(
                 instance.host,
                 instance.port,
@@ -60,10 +62,19 @@ class EngineBase:
             self.remote_port = instance.port
             self.remote_user = instance.user
             self.remote_password = instance.password
-        return self.remote_host, self.remote_port, self.remote_user, self.remote_password
+        return (
+            self.remote_host,
+            self.remote_port,
+            self.remote_user,
+            self.remote_password,
+        )
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
+
+    def test_connection(self):
+        """测试实例链接是否正常"""
+        return self.query(sql=self.test_query)
 
     @property
     def name(self):
@@ -132,29 +143,33 @@ class EngineBase:
     def query_check(self, db_name=None, sql=""):
         """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
 
-    def filter_sql(self, sql='', limit_num=0):
+    def filter_sql(self, sql="", limit_num=0):
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
+    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """实际查询 返回一个ResultSet"""
+        return ResultSet()
 
-    def query_masking(self, db_name=None, sql='', resultset=None):
+    def query_masking(self, db_name=None, sql="", resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         return resultset
 
-    def execute_check(self, db_name=None, sql=''):
+    def execute_check(self, db_name=None, sql=""):
         """执行语句的检查 返回一个ReviewSet"""
+        return ReviewSet()
 
     def execute(self):
         """执行语句 返回一个ReviewSet"""
+        return ReviewSet()
 
     def get_execute_percentage(self):
         """获取执行进度"""
 
     def get_rollback(self, workflow):
         """获取工单回滚语句"""
+        return list()
 
     def get_variables(self, variables=None):
         """获取实例参数，返回一个 ResultSet"""
@@ -200,12 +215,12 @@ def get_engine(instance=None):  # pragma: no cover
 
         return PhoenixEngine(instance=instance)
 
-    elif instance.db_type == 'odps':
+    elif instance.db_type == "odps":
         from .odps import ODPSEngine
 
         return ODPSEngine(instance=instance)
 
-    elif instance.db_type == 'clickhouse':
+    elif instance.db_type == "clickhouse":
         from .clickhouse import ClickHouseEngine
 
         return ClickHouseEngine(instance=instance)

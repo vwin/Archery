@@ -42,8 +42,9 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && yum -y install epel-release \
     && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel  glib2 glib2-devel \
     && yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm \
-    && yum -y install Percona-Server-devel-56 Percona-Server-shared-56  Percona-Server-client-56 \
+    && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 \
     && yum -y install percona-toolkit \
+    && ln -fs /usr/lib64/mysql/libmysqlclient.so.18 /usr/lib64/libperconaserverclient_r.so \
     && cd /opt \
     && git clone https://github.com/hhyo/SQLAdvisor.git --depth 3 \
     && cd /opt/SQLAdvisor/ \
@@ -58,11 +59,6 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
 RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \
     && chmod a+x soar \
-#binlog2sql
-    && cd /opt \
-    && git clone https://github.com/danfengcao/binlog2sql.git \
-    && mv binlog2sql/binlog2sql/ tmp_binlog2sql \
-    && rm -rf binlog2sql \
 #my2sql
     && cd /opt \
     && wget https://raw.githubusercontent.com/liuhr/my2sql/master/releases/centOS_release_7.x/my2sql -O my2sql \
